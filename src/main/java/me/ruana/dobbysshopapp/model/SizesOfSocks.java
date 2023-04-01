@@ -26,7 +26,17 @@ public enum SizesOfSocks {
         return maxSize;
     }
 
-    // ТУСТРИНГ ДЛЯ ВЫВОДА ЗНАЧЕНИЯ ПЕРЕЧИСЛЕНИЯ:
+//    @JsonCreator
+//    public static SizesOfSocks convertSize(int value) {
+//        for (SizesOfSocks sizes : SizesOfSocks.values()) {
+//            if (value >= sizes.minSize && value < sizes.maxSize) {
+//                return sizes;
+//            }
+//        }
+//        throw new RuntimeException("Такого размера нет");
+//    }
+//
+//    // ТУСТРИНГ ДЛЯ ВЫВОДА ЗНАЧЕНИЯ ПЕРЕЧИСЛЕНИЯ:
 //    @Override
 //    public String toString() {
 //        return name() + " (" + minSize + "-" + maxSize + ")";

@@ -6,6 +6,8 @@ import io.swagger.v3.oas.annotations.media.Content;
 import io.swagger.v3.oas.annotations.media.Schema;
 import io.swagger.v3.oas.annotations.responses.ApiResponse;
 import io.swagger.v3.oas.annotations.responses.ApiResponses;
+import me.ruana.dobbysshopapp.exceptions.InvalidRequestException;
+import me.ruana.dobbysshopapp.exceptions.InvalidResponseStatusException;
 import me.ruana.dobbysshopapp.model.ColoursOfSocks;
 import me.ruana.dobbysshopapp.model.SizesOfSocks;
 import me.ruana.dobbysshopapp.model.Socks;
@@ -19,14 +21,23 @@ import org.springframework.web.bind.annotation.*;
 public class StockController {
     private final StockServiceImpl stockService;
 
-
     public StockController(StockServiceImpl stockService) {
         this.stockService = stockService;
     }
 
+    @ExceptionHandler(InvalidRequestException.class)
+    public ResponseEntity<String> handleInvalidException(InvalidRequestException invalidRequestException) {
+        return ResponseEntity.badRequest().body(invalidRequestException.getMessage());
+    }
+
+    @ExceptionHandler(InvalidResponseStatusException.class)
+    public ResponseEntity<String> handleInvalidException(InvalidResponseStatusException invalidResponseStatusException) {
+        return ResponseEntity.badRequest().body(invalidResponseStatusException.getMessage());
+    }
+
     // ПОЛУЧЕНИЕ СПИСКА НОСКОВ:
     @GetMapping//
-    @Operation(summary = "Просмотр всех носков на складе",
+    @Operation(summary = "ПРОСМОТР ВСЕХ НОСКОВ НА СКЛАДЕ",
             description = "Выводит перечень всех носков, имеющихся на складе")
     @ApiResponses(value = {                                                     // нужно понимание!
             @ApiResponse(responseCode = "200",
@@ -40,31 +51,31 @@ public class StockController {
     }
 
     // ДОБАВЛЕНИЕ НОСКОВ:
-   @PostMapping //
-    @Operation(summary = "Добавление носков на склад",
+    @PostMapping //
+    @Operation(summary = "ПРИХОД НОСКОВ НА СКЛАД",
             description = "Выбрать соответствующие добавляемым носкам параметры: размер, цвет, содержание хлопка и количество пар")
-   @ApiResponses(value = {
-           @ApiResponse(responseCode = "200",
-                   description = "Добавить носки на склад",
-                   content = {@Content(mediaType = "application/json",
-                           array = @ArraySchema(schema = @Schema(implementation = Socks.class)))})
-   })
-    public ResponseEntity<?> addSocks (@RequestBody Socks socks, @RequestParam SizesOfSocks size, ColoursOfSocks colour, int cotton, Integer quantity) {
-                var socks1 = stockService.addSocksInStock(size, colour,cotton, quantity);
+    @ApiResponses(value = {
+            @ApiResponse(responseCode = "200",
+                    description = "Добавить носки на склад",
+                    content = {@Content(mediaType = "application/json",
+                            array = @ArraySchema(schema = @Schema(implementation = Socks.class)))})
+    })
+    public ResponseEntity<?> addSocks(@RequestBody Socks socks, @RequestParam SizesOfSocks size, ColoursOfSocks colour, int cotton, Integer quantity) {
+        var socks1 = stockService.addSocksInStock(size, colour, cotton, quantity);
         return ResponseEntity.ok(socks1);
     }
 
     // СПИСОК НОСКОВ ПО ВСЕМ ПАРАМЕТРАМ:
     @GetMapping("/socksParam")
-    @Operation(summary = "Указать параеметры носков, которые нужно подобрать",
-            description = "Показывает количество носков с одинаковыми параметрами на складе")
+    @Operation(summary = "ЗАПРОС КОЛИЧЕСТВА НОСКОВ С УКАЗАННЫМИ ПАРАМЕТРАМИ",
+            description = "Указать размер, цвет, min и max содержание хлопка")
     @ApiResponses(value = {
             @ApiResponse(responseCode = "200",
                     description = "Количество указанных носков",
                     content = {@Content(mediaType = "application/json",
                             array = @ArraySchema(schema = @Schema(implementation = Socks.class)))})
     })
-    public ResponseEntity<Object> getSocksByParameter(ColoursOfSocks colour, SizesOfSocks size, int cottonMin, int cottonMax){
+    public ResponseEntity<Object> getSocksByParameter(SizesOfSocks size, ColoursOfSocks colour, int cottonMin, int cottonMax) {
         var count = stockService.getSocksByParam(colour, size, cottonMin, cottonMax);
         if (count > 0) {
             return ResponseEntity.ok().body(count);
@@ -74,26 +85,51 @@ public class StockController {
     }
 
     //ОТПУСК НОСКОВ СО СКЛАДА:
-//    @PutMapping("/export")
-//    @Operation(summary = "Указать параеметры носков, которые нужно подобрать",
-//            description = "Укажите параемтры носков для списания: размер, цвет, содержание хлопка и количество пар.")
-//    @ApiResponses(value = {
-//            @ApiResponse(responseCode = "200",
-//                    description = "Количество указанных носков",
-//                    content = {@Content(mediaType = "application/json",
-//                            array = @ArraySchema(schema = @Schema(implementation = Socks.class)))}),
-//            @ApiResponse(
-//                    responseCode = "400", description = "Ошибка в параметрах запроса"
-//            ),
-//            @ApiResponse(
-//                    responseCode = "404", description = "Неверный URL или команда"
-//            ),
-//            @ApiResponse(
-//                    responseCode = "500", description = "Извините, при выполнении запроса произошла ошибка на сервере"
-//            )
-//    })
-//    public ResponseEntity<?> exportSocksFromStock() {
-//
-//    }
+    @PutMapping
+    @Operation(summary = "СПИСАНИЕ ПРОДАННЫХ НОСКОВ СО СКЛАДА",
+            description = "Укажите параметры носков для списания: размер, цвет, содержание хлопка и количество пар.")
+    @ApiResponses(value = {
+            @ApiResponse(responseCode = "200",
+                    description = "Списаны указанные носки в заданном количестве",
+                    content = {@Content(mediaType = "application/json",
+                            array = @ArraySchema(schema = @Schema(implementation = Socks.class)))}),
+            @ApiResponse(
+                    responseCode = "400", description = "Ошибка в параметрах запроса"
+            ),
+            @ApiResponse(
+                    responseCode = "404", description = "Неверный URL или команда"
+            ),
+            @ApiResponse(
+                    responseCode = "500", description = "Извините, при выполнении запроса произошла ошибка на сервере"
+            )
+    })
+    public void exportSocksFromStock(@RequestBody Socks socks, @RequestParam SizesOfSocks sizes, ColoursOfSocks colours,
+                                     int cotton, int quantity) {
+        stockService.extractSocksFromStock(sizes, colours, cotton, quantity);
+    }
+
+    // СПИСАНИЕ БРАКА:
+    @DeleteMapping
+    @Operation(summary = "СПИСАНИЕ БРАКОВАННЫХ НОСКОВ СО СКЛАДА",
+            description = "Укажите параметры носков для списания: размер, цвет, содержание хлопка и количество пар.")
+    @ApiResponses(value = {
+            @ApiResponse(responseCode = "200",
+                    description = "Списаны указанные носки в заданном количестве",
+                    content = {@Content(mediaType = "application/json",
+                            array = @ArraySchema(schema = @Schema(implementation = Socks.class)))}),
+            @ApiResponse(
+                    responseCode = "400", description = "Ошибка в параметрах запроса"
+            ),
+            @ApiResponse(
+                    responseCode = "404", description = "Неверный URL или команда"
+            ),
+            @ApiResponse(
+                    responseCode = "500", description = "Извините, при выполнении запроса произошла ошибка на сервере"
+            )
+    })
+    public void deleteDefectiveSocksFromStock(@RequestBody Socks socks, @RequestParam SizesOfSocks sizes, ColoursOfSocks colours,
+                                              int cotton, int quantity) {
+        stockService.extractSocksFromStock(sizes, colours, cotton, quantity);
+    }
 
 }

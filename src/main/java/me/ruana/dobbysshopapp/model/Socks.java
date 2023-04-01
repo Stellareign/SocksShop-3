@@ -11,16 +11,16 @@ import lombok.NoArgsConstructor;
 @NoArgsConstructor
 public class Socks {
     @SerializedName("Размер")
-    @JsonProperty ("Размер")
+    @JsonProperty("Размер")
     private SizesOfSocks sizesOfSocks;
     @SerializedName("Цвет")
-    @JsonProperty ("Цвет")
+    @JsonProperty("Цвет")
     private ColoursOfSocks colourOfSocks;
-   // private CottonContentInSocks cottonContent;
-   @SerializedName("Содержание хлопка")
-   @JsonProperty ("Содержание хлопка")
-   private int cottonContent;
- //   private static int quantity = 0;
+    // private CottonContentInSocks cottonContent;
+    @SerializedName("Содержание хлопка")
+    @JsonProperty("Содержание хлопка")
+    private int cottonContent;
+    //   private static int quantity = 0;
 
 
     @Override
