@@ -7,6 +7,12 @@ import me.ruana.dobbysshopapp.model.Socks;
 import java.util.Map;
 
 public interface StockService {
+    // ДОБАВЛЕНИЕ НОСКОВ:
+    Map<Socks, Integer> addSocksInStock(SizesOfSocks size, ColoursOfSocks colour, int cotton, int addSocksQuantity);
+
+    //  ДОБАВЛЕНИЕ НОСКОВ json:
+    Map<Socks, Integer> addSocksToStockJson(Socks socks, int quantity);
+
     // ПРОСМОТР СПИСКА ВСЕХ НОСКОВ:
     Map<Socks, Integer> getSocksMapInStock();
 

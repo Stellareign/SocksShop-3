@@ -65,6 +65,21 @@ public class StockController {
         return ResponseEntity.ok(socks1);
     }
 
+    // ДОБАВЛЕНИЕ НОСКОВ ЧЕРЕЗ JSON:
+    @PostMapping ("/json")
+    @Operation(summary = "ПРИХОД НОСКОВ НА СКЛАД - через JSON",
+            description = "Выбрать соответствующие добавляемым носкам параметры: размер, цвет, содержание хлопка и количество пар")
+    @ApiResponses(value = {
+            @ApiResponse(responseCode = "200",
+                    description = "Добавить носки на склад",
+                    content = {@Content(mediaType = "application/json",
+                            array = @ArraySchema(schema = @Schema(implementation = Socks.class)))})
+    })
+    public ResponseEntity<?> addSocksJson(@RequestBody Socks socks,int quantity) {
+        var socks1 = stockService.addSocksToStockJson(socks, quantity);
+        return ResponseEntity.ok(socks1);
+    }
+
     // СПИСОК НОСКОВ ПО ВСЕМ ПАРАМЕТРАМ:
     @GetMapping("/socksParam")
     @Operation(summary = "ЗАПРОС КОЛИЧЕСТВА НОСКОВ С УКАЗАННЫМИ ПАРАМЕТРАМИ",

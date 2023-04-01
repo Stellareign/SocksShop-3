@@ -27,6 +27,7 @@ public class StockServiceImpl implements StockService {
     private FileService fileService;
 
     // ДОБАВЛЕНИЕ НОСКОВ:
+    @Override
     public Map<Socks, Integer> addSocksInStock(SizesOfSocks size, ColoursOfSocks colour, int cotton, int addSocksQuantity) {
         Socks socks = new Socks(size, colour, cotton);
         checkRequest(socks);
@@ -36,6 +37,19 @@ public class StockServiceImpl implements StockService {
         } else if (addSocksQuantity <= 0) {
             throw new InvalidRequestException("Количество добавляемых носков не должно быть меньше или равно 0");
         } else socksMap.put(socks, addSocksQuantity);
+        return socksMap;
+    }
+
+    //  ДОБАВЛЕНИЕ НОСКОВ json:
+    @Override
+    public Map<Socks, Integer> addSocksToStockJson(Socks socks, int quantity) {
+        if (quantity <= 0) {
+            throw new InvalidRequestException("Количество добавляемых носков не должно быть меньше или равно 0");}
+        checkRequest(socks);
+        if (socksMap.containsKey(socks)) {
+            allSocksQuantity = socksMap.get(socks).intValue() + quantity;
+            socksMap.put(socks, addSocksQuantity);
+        } else socksMap.put(socks,quantity);
         return socksMap;
     }
 
