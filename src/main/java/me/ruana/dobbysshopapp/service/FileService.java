@@ -1,6 +1,5 @@
 package me.ruana.dobbysshopapp.service;
 
-public interface FileService {
-    boolean saveSocksToFile(String json);
-
+public abstract class FileService {
+    public abstract boolean saveSocksToFile(String json);
 }

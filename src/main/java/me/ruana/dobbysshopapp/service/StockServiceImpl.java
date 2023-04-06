@@ -2,6 +2,8 @@ package me.ruana.dobbysshopapp.service;
 
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
+import me.ruana.dobbysshopapp.exceptions.InvalidRequestException;
+import me.ruana.dobbysshopapp.exceptions.NotFoundException;
 import me.ruana.dobbysshopapp.model.ColoursOfSocks;
 import me.ruana.dobbysshopapp.model.SizesOfSocks;
 import me.ruana.dobbysshopapp.model.Socks;
@@ -9,7 +11,6 @@ import org.apache.commons.lang3.ObjectUtils;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
 
-import java.lang.module.ResolutionException;
 import java.util.HashMap;
 import java.util.Map;
 
@@ -20,30 +21,37 @@ public class StockServiceImpl implements StockService {
     @Value("${name.of.file}")
     private String fileName;
 
-    private static Map<Socks, Integer> socksMap = new HashMap<>();
-    private static int addSocksQuantity = 0;
-    private static int allSocksQuantity = 0;
+    private final static Map<Socks, Integer> socksMap = new HashMap<>();
+
+
     private FileService fileService;
 
     // ДОБАВЛЕНИЕ НОСКОВ:
+    @Override
     public Map<Socks, Integer> addSocksInStock(SizesOfSocks size, ColoursOfSocks colour, int cotton, int addSocksQuantity) {
-//        String size1 = size.name();
-//        String colour1 = colour.name();
-//        String cotton1 = cotton.name();
-        // for (Map.Entry<Socks, Integer> entry : socksMap.entrySet()) {
-        //            if (entry.getKey().getColourOfSocks().name().equals(colour1) &&
-//                    entry.getKey().getSizesOfSocks().name().equals(size1) &&
-//                    entry.getKey().getCottonContent().name().equals(cotton1)) {
-//        SizesOfSocks size2 = SizesOfSocks.valueOf(size1);
-//        CottonContentInSocks cotton2 = CottonContentInSocks.valueOf(cotton1);
-//        ColoursOfSocks colour2 = ColoursOfSocks.valueOf(colour1);
+        int allSocksQuantity = 0;
         Socks socks = new Socks(size, colour, cotton);
-        if (socksMap.containsKey(socks)) {
+        checkRequest(socks);
+        if (socksMap.containsKey(socks) && addSocksQuantity > 0) {
             allSocksQuantity = socksMap.get(socks).intValue() + addSocksQuantity;
             socksMap.put(socks, allSocksQuantity);
-            saveSocksToFile();
+        } else if (addSocksQuantity <= 0) {
+            throw new InvalidRequestException("Количество добавляемых носков не должно быть меньше или равно 0");
         } else socksMap.put(socks, addSocksQuantity);
-        saveSocksToFile();
+        return socksMap;
+    }
+
+    //  ДОБАВЛЕНИЕ НОСКОВ json:
+    @Override
+    public Map<Socks, Integer> addSocksToStockJson(Socks socks, int quantity) {
+        int allSocksQuantity = 0;
+        if (quantity <= 0) {
+            throw new InvalidRequestException("Количество добавляемых носков не должно быть меньше или равно 0");}
+        checkRequest(socks);
+        if (socksMap.containsKey(socks)) {
+            allSocksQuantity = socksMap.get(socks).intValue() + quantity;
+            socksMap.put(socks, allSocksQuantity);
+        } else socksMap.put(socks,quantity);
         return socksMap;
     }
 
@@ -52,7 +60,7 @@ public class StockServiceImpl implements StockService {
     @Override
     public Map<Socks, Integer> getSocksMapInStock() {
         if (socksMap.isEmpty()) {
-            throw new ResolutionException("Склад пуст");
+            throw new NotFoundException("Склад пуст");
         } else return socksMap;
     }
 
@@ -67,37 +75,61 @@ public class StockServiceImpl implements StockService {
         }
     }
 
-
     // КОЛИЧЕСТВО НОСКОВ ПО ПАРАМЕТРАМ:
     @Override
     public int getSocksByParam(ColoursOfSocks colour, SizesOfSocks size, int cottonMin, int cottonMax) {
+        if (cottonMax < cottonMin) {
+            throw new InvalidRequestException("Min количество хлопка не может быть больше max.");
+        }
         ObjectUtils.isNotEmpty(socksMap);
+        if (socksMap.isEmpty()) {
+            throw new NotFoundException("Склад пустой.");
+        }
         int count = 0;
         for (Map.Entry<Socks, Integer> entry : socksMap.entrySet()) {
             if (entry.getKey().getColourOfSocks() == colour &&
                     entry.getKey().getSizesOfSocks() == size &&
-                    //entry.getKey().getCottonContent() == cotton)
                     entry.getKey().getCottonContent() < cottonMax &&
                     entry.getKey().getCottonContent() >= cottonMin) {
                 count += entry.getValue();
+                checkRequest(entry.getKey());
             }
         }
         return count;
     }
 
-    // ОТПУСК НОСКОВ
+    // ОТПУСК и СПИСАНИЕ бракованных НОСКОВ:
     @Override
     public Map<Socks, Integer> extractSocksFromStock(SizesOfSocks size, ColoursOfSocks colour, int cotton, int exractSocksQuantity) {
+        int allSocksQuantity = 0;
         Socks socks = new Socks(size, colour, cotton);
-        if (socksMap.containsKey(socks)) {
+        if (socksMap.isEmpty() || !socksMap.containsKey(socks)) {
+            throw new NotFoundException("Склад пусть или указанных носков нет на складе.");
+        }
+        checkRequest(socks);
+        if (socksMap != null && socksMap.containsKey(socks)) {
             if (socksMap.get(socks).intValue() > exractSocksQuantity) {
                 allSocksQuantity = socksMap.get(socks).intValue() - exractSocksQuantity;
                 socksMap.put(socks, allSocksQuantity);
-                saveSocksToFile();
+
+            } else if (exractSocksQuantity < 0) {
+                throw new InvalidRequestException("Количество носков для списания не может быть меньше нуля.");
+            } else if (socksMap.get(socks).intValue() < exractSocksQuantity) {
+                throw new NotFoundException("Указанных носков на складе недостаточно для списания.");
             }
-        } else
-            throw new IllegalArgumentException("Указанных носков на складе недостаточно для списания: " + socksMap.get(socks).intValue() + "пар(ы)");
+        }
         return socksMap;
+    }
+
+
+    // ПРОВЕРКА ЗАПРОСА ДЛЯ ОБРАБОТКИ ИСКЛЮЧЕНИЯ:
+    private void checkRequest(Socks socks) {
+        if (socks.getColourOfSocks() == null || socks.getSizesOfSocks() == null) {
+            throw new InvalidRequestException("Заполните все необходимые поля");
+        }
+        if (socks.getCottonContent() < 0 || socks.getCottonContent() > 100) {
+            throw new InvalidRequestException("Содержание хлопка не может быть больше 100 % или меньше 0 %.");
+        }
     }
 }
 
