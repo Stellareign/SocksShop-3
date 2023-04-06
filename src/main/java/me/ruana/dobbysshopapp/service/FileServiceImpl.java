@@ -8,7 +8,7 @@ import java.nio.file.Files;
 import java.nio.file.Path;
 
 @Service
-public class FileServiceImpl implements FileService {
+public class FileServiceImpl extends FileService {
     @Value("${path.to.file}")
     private String filePath;
     @Value("${name.of.file}")
@@ -27,3 +27,7 @@ public class FileServiceImpl implements FileService {
 
 
 }
+
+
+
+

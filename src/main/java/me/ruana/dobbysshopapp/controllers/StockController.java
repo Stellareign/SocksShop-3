@@ -8,6 +8,7 @@ import io.swagger.v3.oas.annotations.responses.ApiResponse;
 import io.swagger.v3.oas.annotations.responses.ApiResponses;
 import me.ruana.dobbysshopapp.exceptions.InvalidRequestException;
 import me.ruana.dobbysshopapp.exceptions.InvalidResponseStatusException;
+import me.ruana.dobbysshopapp.exceptions.NotFoundException;
 import me.ruana.dobbysshopapp.model.ColoursOfSocks;
 import me.ruana.dobbysshopapp.model.SizesOfSocks;
 import me.ruana.dobbysshopapp.model.Socks;
@@ -34,12 +35,16 @@ public class StockController {
     public ResponseEntity<String> handleInvalidException(InvalidResponseStatusException invalidResponseStatusException) {
         return ResponseEntity.badRequest().body(invalidResponseStatusException.getMessage());
     }
+    @ExceptionHandler(NotFoundException.class)
+    public ResponseEntity<String> handleInvalidException(NotFoundException notFoundException) {
+        return ResponseEntity.badRequest().body(notFoundException.getMessage());
+    }
 
     // ПОЛУЧЕНИЕ СПИСКА НОСКОВ:
     @GetMapping//
     @Operation(summary = "ПРОСМОТР ВСЕХ НОСКОВ НА СКЛАДЕ",
             description = "Выводит перечень всех носков, имеющихся на складе")
-    @ApiResponses(value = {                                                     // нужно понимание!
+    @ApiResponses(value = {
             @ApiResponse(responseCode = "200",
                     description = "Носки в наличии",
                     content = {@Content(mediaType = "application/json",
@@ -60,13 +65,13 @@ public class StockController {
                     content = {@Content(mediaType = "application/json",
                             array = @ArraySchema(schema = @Schema(implementation = Socks.class)))})
     })
-    public ResponseEntity<?> addSocks(@RequestBody Socks socks, @RequestParam SizesOfSocks size, ColoursOfSocks colour, int cotton, Integer quantity) {
+    public ResponseEntity<?> addSocks(@RequestParam SizesOfSocks size, ColoursOfSocks colour, int cotton, Integer quantity) {
         var socks1 = stockService.addSocksInStock(size, colour, cotton, quantity);
         return ResponseEntity.ok(socks1);
     }
 
     // ДОБАВЛЕНИЕ НОСКОВ ЧЕРЕЗ JSON:
-    @PostMapping ("/json")
+    @PostMapping("/json")
     @Operation(summary = "ПРИХОД НОСКОВ НА СКЛАД - через JSON",
             description = "Выбрать соответствующие добавляемым носкам параметры: размер, цвет, содержание хлопка и количество пар")
     @ApiResponses(value = {
@@ -81,7 +86,7 @@ public class StockController {
     }
 
     // СПИСОК НОСКОВ ПО ВСЕМ ПАРАМЕТРАМ:
-    @GetMapping("/socksParam")
+    @GetMapping("/socks")
     @Operation(summary = "ЗАПРОС КОЛИЧЕСТВА НОСКОВ С УКАЗАННЫМИ ПАРАМЕТРАМИ",
             description = "Указать размер, цвет, min и max содержание хлопка")
     @ApiResponses(value = {
@@ -95,7 +100,7 @@ public class StockController {
         if (count > 0) {
             return ResponseEntity.ok().body(count);
         } else {
-            return new ResponseEntity<>("Указанные носки отсутствуют на складе", HttpStatus.BAD_REQUEST);
+            return new ResponseEntity<>("Указанные носки отсутствуют на складе", HttpStatus.NOT_FOUND);
         }
     }
 
@@ -118,7 +123,7 @@ public class StockController {
                     responseCode = "500", description = "Извините, при выполнении запроса произошла ошибка на сервере"
             )
     })
-    public void exportSocksFromStock(@RequestBody Socks socks, @RequestParam SizesOfSocks sizes, ColoursOfSocks colours,
+    public void exportSocksFromStock(@RequestParam SizesOfSocks sizes, ColoursOfSocks colours,
                                      int cotton, int quantity) {
         stockService.extractSocksFromStock(sizes, colours, cotton, quantity);
     }
@@ -142,7 +147,7 @@ public class StockController {
                     responseCode = "500", description = "Извините, при выполнении запроса произошла ошибка на сервере"
             )
     })
-    public void deleteDefectiveSocksFromStock(@RequestBody Socks socks, @RequestParam SizesOfSocks sizes, ColoursOfSocks colours,
+    public void deleteDefectiveSocksFromStock(@RequestParam SizesOfSocks sizes, ColoursOfSocks colours,
                                               int cotton, int quantity) {
         stockService.extractSocksFromStock(sizes, colours, cotton, quantity);
     }
