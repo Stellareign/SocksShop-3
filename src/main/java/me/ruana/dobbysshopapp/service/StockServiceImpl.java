@@ -3,7 +3,7 @@ package me.ruana.dobbysshopapp.service;
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import me.ruana.dobbysshopapp.exceptions.InvalidRequestException;
-import me.ruana.dobbysshopapp.exceptions.InvalidResponseStatusException;
+import me.ruana.dobbysshopapp.exceptions.NotFoundException;
 import me.ruana.dobbysshopapp.model.ColoursOfSocks;
 import me.ruana.dobbysshopapp.model.SizesOfSocks;
 import me.ruana.dobbysshopapp.model.Socks;
@@ -21,14 +21,15 @@ public class StockServiceImpl implements StockService {
     @Value("${name.of.file}")
     private String fileName;
 
-    private static Map<Socks, Integer> socksMap = new HashMap<>();
-    private static int addSocksQuantity = 0;
-    private static int allSocksQuantity = 0;
+    private final static Map<Socks, Integer> socksMap = new HashMap<>();
+
+
     private FileService fileService;
 
     // ДОБАВЛЕНИЕ НОСКОВ:
     @Override
     public Map<Socks, Integer> addSocksInStock(SizesOfSocks size, ColoursOfSocks colour, int cotton, int addSocksQuantity) {
+        int allSocksQuantity = 0;
         Socks socks = new Socks(size, colour, cotton);
         checkRequest(socks);
         if (socksMap.containsKey(socks) && addSocksQuantity > 0) {
@@ -43,12 +44,13 @@ public class StockServiceImpl implements StockService {
     //  ДОБАВЛЕНИЕ НОСКОВ json:
     @Override
     public Map<Socks, Integer> addSocksToStockJson(Socks socks, int quantity) {
+        int allSocksQuantity = 0;
         if (quantity <= 0) {
             throw new InvalidRequestException("Количество добавляемых носков не должно быть меньше или равно 0");}
         checkRequest(socks);
         if (socksMap.containsKey(socks)) {
             allSocksQuantity = socksMap.get(socks).intValue() + quantity;
-            socksMap.put(socks, addSocksQuantity);
+            socksMap.put(socks, allSocksQuantity);
         } else socksMap.put(socks,quantity);
         return socksMap;
     }
@@ -58,7 +60,7 @@ public class StockServiceImpl implements StockService {
     @Override
     public Map<Socks, Integer> getSocksMapInStock() {
         if (socksMap.isEmpty()) {
-            throw new InvalidRequestException("Склад пуст");
+            throw new NotFoundException("Склад пуст");
         } else return socksMap;
     }
 
@@ -81,7 +83,7 @@ public class StockServiceImpl implements StockService {
         }
         ObjectUtils.isNotEmpty(socksMap);
         if (socksMap.isEmpty()) {
-            throw new InvalidRequestException("Склад пустой.");
+            throw new NotFoundException("Склад пустой.");
         }
         int count = 0;
         for (Map.Entry<Socks, Integer> entry : socksMap.entrySet()) {
@@ -99,9 +101,10 @@ public class StockServiceImpl implements StockService {
     // ОТПУСК и СПИСАНИЕ бракованных НОСКОВ:
     @Override
     public Map<Socks, Integer> extractSocksFromStock(SizesOfSocks size, ColoursOfSocks colour, int cotton, int exractSocksQuantity) {
+        int allSocksQuantity = 0;
         Socks socks = new Socks(size, colour, cotton);
         if (socksMap.isEmpty() || !socksMap.containsKey(socks)) {
-            throw new InvalidResponseStatusException("Склад пусть или указанных носков нет на складе.");
+            throw new NotFoundException("Склад пусть или указанных носков нет на складе.");
         }
         checkRequest(socks);
         if (socksMap != null && socksMap.containsKey(socks)) {
@@ -112,7 +115,7 @@ public class StockServiceImpl implements StockService {
             } else if (exractSocksQuantity < 0) {
                 throw new InvalidRequestException("Количество носков для списания не может быть меньше нуля.");
             } else if (socksMap.get(socks).intValue() < exractSocksQuantity) {
-                throw new InvalidRequestException("Указанных носков на складе недостаточно для списания.");
+                throw new NotFoundException("Указанных носков на складе недостаточно для списания.");
             }
         }
         return socksMap;
