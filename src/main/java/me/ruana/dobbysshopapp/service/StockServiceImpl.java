@@ -92,7 +92,7 @@ public class StockServiceImpl implements StockService {
     public Map<Socks, Integer> getSocksMapInStock() throws IOException {
         Map<Socks, Integer> socksMap1 = readSocksMapFromFile();
         //  socksMap = socksMap1;
-        if (socksMap1.isEmpty()) {
+        if (socksMap1.isEmpty() || socksMap1 == null) {
             throw new NotFoundException("Склад пуст");
         } else
             return socksMap1;
@@ -175,6 +175,9 @@ public class StockServiceImpl implements StockService {
         File file = new File(filePath + "/" + fileNameSocks);
         if (!file.exists()) {
             file.createNewFile();
+        }
+        if (file.length() == 0) {
+            saveSocksMapToFile(socksMap);
         }
         String jsonFilePath = filePath + "/" + fileNameSocks;
         ObjectMapper objectMapper = new ObjectMapper();

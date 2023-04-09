@@ -43,7 +43,7 @@ public class OperationsHistoryImpl implements OperationsHistory {
     public Map<Integer, SocksOperation> addOperation(SocksOperation socksOperation) throws IOException {
         Map<Integer, SocksOperation> socksOperationMap1 = readSocksOperationFromFile();
         int operationId = 0;
-        if (socksOperationMap1 != null) {
+        if (socksOperationMap1 != null && !socksOperationMap1.isEmpty()) {
             operationId = Collections.max(socksOperationMap1.keySet()) + 1;
             socksOperationMap1.put(operationId, socksOperation);
             saveSocksOperationMapToFile(socksOperationMap1);
