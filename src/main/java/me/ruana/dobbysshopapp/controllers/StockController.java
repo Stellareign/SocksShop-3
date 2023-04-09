@@ -177,7 +177,7 @@ public class StockController {
                                               int cotton, int quantity) throws IOException {
         Socks socks = new Socks(sizes, colours, cotton);
         stockService.extractSocksFromStock(sizes, colours, cotton, quantity);
-        SocksOperation socksOperation = new SocksOperation(OperationsType.SELL_SOCKS, LocalDateTime.now(), quantity, socks);
+        SocksOperation socksOperation = new SocksOperation(OperationsType.DELETE_SOCKS, LocalDateTime.now(), quantity, socks);
         var operationList = operationsHistory.addOperation(socksOperation);
         operationsHistory.saveSocksOperationMapToFile(operationList);
     }
