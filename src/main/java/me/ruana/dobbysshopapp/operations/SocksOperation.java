@@ -1,5 +1,7 @@
 package me.ruana.dobbysshopapp.operations;
 
+import com.fasterxml.jackson.annotation.JsonProperty;
+import com.google.gson.annotations.SerializedName;
 import lombok.AllArgsConstructor;
 import lombok.Data;
 import lombok.NoArgsConstructor;
@@ -13,13 +15,17 @@ import java.time.LocalDateTime;
 
 
 public class SocksOperation {
-
+    @SerializedName("Тип операции")
+    @JsonProperty("Тип операции")
     private OperationsType operationsType;
-
+    @SerializedName("Дата")
+    @JsonProperty("Дата")
     private LocalDateTime dateTime;
-
+    @SerializedName("Количество")
+    @JsonProperty("Количество")
     private int quantity;
-
+    @SerializedName("Носки")
+    @JsonProperty("Носки")
     private Socks socks;
 
 
