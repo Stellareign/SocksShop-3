@@ -9,6 +9,7 @@ public enum ColoursOfSocks {
     DARKBLUE("тёмно-синий"),
     BEIGE("бежевый"),
     COLORFUL("разноцветный");
+
     private final String colour;
 
     ColoursOfSocks(String colour) {
@@ -18,6 +19,7 @@ public enum ColoursOfSocks {
     public String getColour() {
         return colour;
     }
+
 // ТУСТРИНГ ДЛЯ ВЫВОДА ЗНАЧЕНИЯ ПЕРЕЧИСЛЕНИЯ:
 //    @Override
 //    public String toString() {

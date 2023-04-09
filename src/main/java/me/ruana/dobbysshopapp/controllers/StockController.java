@@ -12,18 +12,31 @@ import me.ruana.dobbysshopapp.exceptions.NotFoundException;
 import me.ruana.dobbysshopapp.model.ColoursOfSocks;
 import me.ruana.dobbysshopapp.model.SizesOfSocks;
 import me.ruana.dobbysshopapp.model.Socks;
+import me.ruana.dobbysshopapp.operations.OperationsType;
+import me.ruana.dobbysshopapp.operations.SocksOperation;
+import me.ruana.dobbysshopapp.service.OperationsHistory;
 import me.ruana.dobbysshopapp.service.StockServiceImpl;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
+import java.io.IOException;
+import java.time.LocalDateTime;
+
 @RestController
 @RequestMapping("/stock")
 public class StockController {
+    @Value("${path.to.file}")
+    private String filePath;
+    @Value("${name.of.file1}")
+    private String fileNameSocks;
     private final StockServiceImpl stockService;
+    private final OperationsHistory operationsHistory;
 
-    public StockController(StockServiceImpl stockService) {
+    public StockController(StockServiceImpl stockService, OperationsHistory operationsHistory) {
         this.stockService = stockService;
+        this.operationsHistory = operationsHistory;
     }
 
     @ExceptionHandler(InvalidRequestException.class)
@@ -35,13 +48,16 @@ public class StockController {
     public ResponseEntity<String> handleInvalidException(InvalidResponseStatusException invalidResponseStatusException) {
         return ResponseEntity.badRequest().body(invalidResponseStatusException.getMessage());
     }
+
     @ExceptionHandler(NotFoundException.class)
     public ResponseEntity<String> handleInvalidException(NotFoundException notFoundException) {
         return ResponseEntity.badRequest().body(notFoundException.getMessage());
     }
 
     // ПОЛУЧЕНИЕ СПИСКА НОСКОВ:
+
     @GetMapping//
+
     @Operation(summary = "ПРОСМОТР ВСЕХ НОСКОВ НА СКЛАДЕ",
             description = "Выводит перечень всех носков, имеющихся на складе")
     @ApiResponses(value = {                                                     // нужно понимание!
@@ -50,8 +66,9 @@ public class StockController {
                     content = {@Content(mediaType = "application/json",
                             array = @ArraySchema(schema = @Schema(implementation = Socks.class)))})
     })
-    public ResponseEntity<Object> getSocksList() {
-        var socksInStock = stockService.getSocksMapInStock();
+
+    public ResponseEntity<Object> getSocksList() throws IOException {
+        var socksInStock = stockService.readSocksMapFromFile();
         return ResponseEntity.ok().body(socksInStock);
     }
 
@@ -64,14 +81,19 @@ public class StockController {
                     description = "Добавить носки на склад",
                     content = {@Content(mediaType = "application/json",
                             array = @ArraySchema(schema = @Schema(implementation = Socks.class)))})
+//                            @Content(mediaType = "application/json",
+//                                    array = @ArraySchema(schema = @Schema(implementation = SocksOperation.class
     })
-    public ResponseEntity<?> addSocks(@RequestParam SizesOfSocks size, ColoursOfSocks colour, int cotton, Integer quantity) {
+    public ResponseEntity<?> addSocks(@RequestParam SizesOfSocks size, ColoursOfSocks colour, int cotton, Integer quantity) throws IOException {
+        Socks socks = new Socks(size, colour, cotton);
         var socks1 = stockService.addSocksInStock(size, colour, cotton, quantity);
+        SocksOperation socksOperation = new SocksOperation(OperationsType.PUT_SOCKS, LocalDateTime.now(), quantity, socks);
+        operationsHistory.addOperation(socksOperation);
         return ResponseEntity.ok(socks1);
     }
 
     // ДОБАВЛЕНИЕ НОСКОВ ЧЕРЕЗ JSON:
-    @PostMapping ("/json")
+    @PostMapping("/json")
     @Operation(summary = "ПРИХОД НОСКОВ НА СКЛАД - через JSON",
             description = "Выбрать соответствующие добавляемым носкам параметры: размер, цвет, содержание хлопка и количество пар")
     @ApiResponses(value = {
@@ -80,7 +102,7 @@ public class StockController {
                     content = {@Content(mediaType = "application/json",
                             array = @ArraySchema(schema = @Schema(implementation = Socks.class)))})
     })
-    public ResponseEntity<?> addSocksJson(@RequestBody Socks socks,int quantity) {
+    public ResponseEntity<?> addSocksJson(@RequestBody Socks socks, int quantity) {
         var socks1 = stockService.addSocksToStockJson(socks, quantity);
         return ResponseEntity.ok(socks1);
     }
@@ -95,7 +117,7 @@ public class StockController {
                     content = {@Content(mediaType = "application/json",
                             array = @ArraySchema(schema = @Schema(implementation = Socks.class)))})
     })
-    public ResponseEntity<Object> getSocksByParameter(SizesOfSocks size, ColoursOfSocks colour, int cottonMin, int cottonMax) {
+    public ResponseEntity<Object> getSocksByParameter(SizesOfSocks size, ColoursOfSocks colour, int cottonMin, int cottonMax) throws IOException {
         var count = stockService.getSocksByParam(colour, size, cottonMin, cottonMax);
         if (count > 0) {
             return ResponseEntity.ok().body(count);
@@ -124,8 +146,12 @@ public class StockController {
             )
     })
     public void exportSocksFromStock(@RequestParam SizesOfSocks sizes, ColoursOfSocks colours,
-                                     int cotton, int quantity) {
+                                     int cotton, int quantity) throws IOException {
+        Socks socks = new Socks(sizes, colours, cotton);
         stockService.extractSocksFromStock(sizes, colours, cotton, quantity);
+        SocksOperation socksOperation = new SocksOperation(OperationsType.SELL_SOCKS, LocalDateTime.now(), quantity, socks);
+        var operationList = operationsHistory.addOperation(socksOperation);
+        operationsHistory.saveSocksOperationMapToFile(operationList);
     }
 
     // СПИСАНИЕ БРАКА:
@@ -148,8 +174,12 @@ public class StockController {
             )
     })
     public void deleteDefectiveSocksFromStock(@RequestParam SizesOfSocks sizes, ColoursOfSocks colours,
-                                              int cotton, int quantity) {
+                                              int cotton, int quantity) throws IOException {
+        Socks socks = new Socks(sizes, colours, cotton);
         stockService.extractSocksFromStock(sizes, colours, cotton, quantity);
+        SocksOperation socksOperation = new SocksOperation(OperationsType.SELL_SOCKS, LocalDateTime.now(), quantity, socks);
+        var operationList = operationsHistory.addOperation(socksOperation);
+        operationsHistory.saveSocksOperationMapToFile(operationList);
     }
 
 }
