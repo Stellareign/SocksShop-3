@@ -1,6 +1,7 @@
 package me.ruana.dobbysshopapp.model;
 
-public enum CottonContentInSocks {
+public enum
+CottonContentInSocks {
     SYNTHETICS(0, 5),
     VERY_LITTLE_COTTON(5, 20),
     LITTLE_COTTON(25, 40),
