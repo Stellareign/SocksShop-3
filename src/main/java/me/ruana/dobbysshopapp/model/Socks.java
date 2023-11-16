@@ -9,26 +9,27 @@ import lombok.NoArgsConstructor;
 @Data
 @AllArgsConstructor
 @NoArgsConstructor
+
 public class Socks {
     @SerializedName("Размер")
-    @JsonProperty ("Размер")
+    @JsonProperty("Размер")
     private SizesOfSocks sizesOfSocks;
     @SerializedName("Цвет")
-    @JsonProperty ("Цвет")
+    @JsonProperty("Цвет")
     private ColoursOfSocks colourOfSocks;
-   // private CottonContentInSocks cottonContent;
-   @SerializedName("Содержание хлопка")
-   @JsonProperty ("Содержание хлопка")
-   private int cottonContent;
- //   private static int quantity = 0;
+
+    @SerializedName("Содержание хлопка")
+    @JsonProperty("Содержание хлопка")
+    private int cottonContent;
+
 
 
     @Override
     public String toString() {
-        return "Носки " +
+        return
                 "размер: " + sizesOfSocks.toString() +
-                ", цвет " + colourOfSocks +
-                ", содержание хлопка " + cottonContent +
-                ", наличие на складе: ";
+                ", цвет: " + colourOfSocks +
+                ", содержание хлопка: " + cottonContent +
+                ", наличие на складе ";
     }
 }
