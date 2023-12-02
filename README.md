@@ -1,9 +1,9 @@
 # SocksShop-KURSOVIK_3
-<h2 align="center">Учебный проект </h2>
+<!--<h2 align="center">Учебный проект </h2>
 <h3 align="center"> Группа SkyPro JAVA-14 </h3>
 <h3 align="center"> Курс 3 </h3>
 <h4 align="center"> 2023 г. </h4>
-<h3> Разработал студент: А.Е. Руднева </h3>
+<h3> Разработал студент: А.Е. Руднева </h3>-->
 <h1 align="center">Магазин носков</h1>
 
 ***
