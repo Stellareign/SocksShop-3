@@ -1,4 +1,4 @@
-# SocksShop-KURSOVIK_3
+# SocksShop
 <!--<h2 align="center">Учебный проект </h2>
 <h3 align="center"> Группа SkyPro JAVA-14 </h3>
 <h3 align="center"> Курс 3 </h3>
